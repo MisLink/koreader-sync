@@ -1,0 +1,20 @@
+name = "koreader-sync"
+main = "build/worker/shim.mjs"
+compatibility_date = "2025-06-29"
+
+kv_namespaces = [
+    { binding = "KV_BINDING", id = "a28e960101064e09b01ab300b4dd2c03" },
+]
+
+routes = [{ pattern = "koreader-sync.uoiai.me", custom_domain = true }]
+
+[build]
+command = "cargo install -q worker-build && ~/.cargo/bin/worker-build --release"
+
+[observability.logs]
+enabled = true
+
+[env.local]
+kv_namespaces = [{ binding = "KV_BINDING", id = "koreader-sync" }]
+[env.local.build]
+command = "cargo install -q worker-build && ~/.cargo/bin/worker-build"
