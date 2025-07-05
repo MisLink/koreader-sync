@@ -85,7 +85,8 @@ impl From<AppError> for WorkerResult<Response> {
 }
 
 impl From<KvError> for AppError {
-    fn from(_error: KvError) -> Self {
+    fn from(error: KvError) -> Self {
+        tracing::error!("KV Error: {:?}", error);
         AppError::StoreError
     }
 }

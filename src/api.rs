@@ -11,19 +11,24 @@ fn is_valid_key_field(s: &str) -> bool {
 }
 
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct CreateUserRequest {
     username: String,
     password: String,
 }
 
+#[tracing::instrument(skip(ctx))]
 pub async fn create_user(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
     let request_data: CreateUserRequest = match req.json().await {
         Ok(data) => data,
-        Err(_) => return AppError::InvalidRequest.into(),
+        Err(error) => {
+            tracing::error!("Failed to parse request JSON {}", error);
+            return AppError::InvalidRequest.into();
+        }
     };
 
     if !is_valid_key_field(&request_data.username) || request_data.password.is_empty() {
+        tracing::error!(request_data.username, "Invalid username or password");
         return AppError::InvalidRequest.into();
     }
 
@@ -38,6 +43,7 @@ pub async fn create_user(mut req: Request, ctx: RouteContext<()>) -> WorkerResul
     })).map(|res| res.with_status(http::StatusCode::CREATED.as_u16()))
 }
 
+#[tracing::instrument(skip(kv))]
 async fn authorize(kv: &KvStore, req: &Request) -> Result<String, AppError> {
     let username = req.headers().get("x-auth-user")
         .map_err(|_| AppError::Unauthorized)?
@@ -59,6 +65,7 @@ async fn authorize(kv: &KvStore, req: &Request) -> Result<String, AppError> {
     Ok(user.name)
 }
 
+#[tracing::instrument(skip(ctx))]
 pub async fn auth_user(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
     let kv = db::get_kv(&ctx)?;
     match authorize(&kv, &req).await {
@@ -96,6 +103,7 @@ fn now_timestamp() -> u64 {
     OffsetDateTime::now_utc().unix_timestamp() as u64
 }
 
+#[tracing::instrument(skip(ctx))]
 pub async fn update_progress(mut req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
     let kv = db::get_kv(&ctx)?;
     let username = match authorize(&kv, &req).await {
@@ -123,6 +131,7 @@ pub async fn update_progress(mut req: Request, ctx: RouteContext<()>) -> WorkerR
     }))
 }
 
+#[tracing::instrument(skip(ctx))]
 pub async fn get_progress(req: Request, ctx: RouteContext<()>) -> WorkerResult<Response> {
     let kv = db::get_kv(&ctx)?;
     let username = match authorize(&kv, &req).await {
@@ -144,6 +153,7 @@ pub async fn get_progress(req: Request, ctx: RouteContext<()>) -> WorkerResult<R
     }
 }
 
+#[tracing::instrument(skip(_ctx))]
 pub async fn health_check(_req: Request, _ctx: RouteContext<()>) -> WorkerResult<Response> {
     Response::from_json(&json!({ "status": "OK" }))
 }

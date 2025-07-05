@@ -11,7 +11,7 @@ routes = [{ pattern = "koreader-sync.uoiai.me", custom_domain = true }]
 [build]
 command = "cargo install -q worker-build && ~/.cargo/bin/worker-build --release"
 
-[observability.logs]
+[observability]
 enabled = true
 
 [env.local]
