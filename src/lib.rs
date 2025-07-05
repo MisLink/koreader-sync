@@ -1,4 +1,4 @@
-use tracing_web::{performance_layer, MakeConsoleWriter};
+use tracing_web::{performance_layer, MakeWebConsoleWriter};
 use tracing_subscriber::{fmt::{format::Pretty, time::UtcTime}, prelude::*};
 use worker::*;
 mod api;
@@ -11,7 +11,7 @@ fn start() {
         .json()
         .with_ansi(false)
         .with_timer(UtcTime::rfc_3339())
-        .with_writer(MakeConsoleWriter);
+        .with_writer(MakeWebConsoleWriter::default());
     let perf_layer = performance_layer().with_details_from_fields(Pretty::default());
     tracing_subscriber::registry()
         .with(fmt_layer)
